@@ -1,3 +1,5 @@
+## This script works with Apple HomeBridge and detects dark objects which are moving and are at least 100 pixels 
+
 import cv2
 import numpy as np
 import imutils
@@ -42,7 +44,7 @@ def process_camera(rtsp_url):
 
         if is_time_to_detect_bats():
             for c in contours:
-                if cv2.contourArea(c) < 1000:
+                if cv2.contourArea(c) < 100:
                     continue
 
                 (x, y, w, h) = cv2.boundingRect(c)
