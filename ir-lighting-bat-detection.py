@@ -7,11 +7,20 @@ import threading
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import queue
+from datetime import datetime, time
+import pytz
+
+def is_time_to_detect_bats():
+    new_york_tz = pytz.timezone('America/New_York')
+    current_time = datetime.now(new_york_tz).time()
+
+    # Detect bats only after 8:30 PM
+    return current_time >= time(20, 30)
 
 frame_queue = queue.Queue()
 
 def notify_bat_detected():
-    requests.post("http://127.0.0.1:8080/on")
+    requests.post("http://localhost:8080/on")
 
 def process_camera(rtsp_url):
     global frame_queue
@@ -25,20 +34,20 @@ def process_camera(rtsp_url):
             print(f"Error: Unable to load video stream from {rtsp_url}")
             break
 
-        frame = imutils.resize(frame, width=600)
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         fgmask = fgbg.apply(gray_frame)
 
         contours = cv2.findContours(fgmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
 
-        for c in contours:
-            if cv2.contourArea(c) < 1000:
-                continue
+        if is_time_to_detect_bats():
+            for c in contours:
+                if cv2.contourArea(c) < 1000:
+                    continue
 
-            (x, y, w, h) = cv2.boundingRect(c)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            notify_bat_detected()
+                (x, y, w, h) = cv2.boundingRect(c)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                notify_bat_detected()
 
         frame_queue.put(frame)
 
@@ -54,8 +63,8 @@ def display_frames():
             plt.clf()
 
 # Replace with your cameras' RTSP stream URLs
-rtsp_url_camera1 = "rtsps://192.168.100.22:1341/xxxxx"
-rtsp_url_camera2 = "rtsps://192.168.100.22:1341/xxxxxx"
+rtsp_url_camera1 = "rtsps://192.168.100.211:1341/xxxxxxJH3wqrHmR?enableSrtp"
+rtsp_url_camera2 = "rtsps://192.168.100.211:1341/HxxxxxxGBr5?enableSrtp"
 
 # Start processing both cameras in separate threads
 thread1 = threading.Thread(target=process_camera, args=(rtsp_url_camera1,))
